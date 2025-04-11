@@ -61,5 +61,5 @@ It uses real buy/sell offers (or both, depending on the settings), which are upd
 
 Free to use and no Dev Fees
 
-Must be run with Python; installation instructions are available on Github. We will provide an executable version without Python soon.
+Must be run with Python. We will provide an executable version without Python soon.
 
