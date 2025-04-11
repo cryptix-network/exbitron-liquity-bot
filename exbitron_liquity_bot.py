@@ -1,9 +1,11 @@
 import time
 import exbitron_exchange_api as exchange
 
+
 ###
 ### CRYPTIX LIQUIDITY BOT FOR BUY AND SELL ORDERS ###
 ###
+
 
 pair = 'CYTX-USDT'
 
@@ -12,13 +14,14 @@ exchange.TOKEN = 'YOUR_API_KEY_HERE'
 
 # Starting values for the trading bot
 START_USDT_AMOUNT = 100.0  # Initial amount of USDT (Tether) to start with, in this case, 100.0 USDT
-START_COIN_AMOUNT = 100000.0  # Initial amount of coins to start with, in this case, 100,000 coins
-MAX_USDT_AMOUNT = 100.0  # Maximum USDT amount the bot is allowed to hold, capped at 100.0 USDT
-MAX_COIN_AMOUNT = 150000.0  # Maximum coin amount the bot is allowed to hold, capped at 150,000 coins
+START_COIN_AMOUNT = 20000.0  # Initial amount of coins to start with, in this case, 20,000 coins
+MAX_USDT_AMOUNT = 125.0  # Maximum USDT amount the bot is allowed to hold, capped at 125.0 USDT
+MAX_COIN_AMOUNT = 50000.0  # Maximum coin amount the bot is allowed to hold, capped at 50,000 coins
 SPREAD_PERCENTAGE = 5.0  # Percentage to determine the price spread between buy and sell orders, 5% spread
-NUM_OFFERS = 50  # Number of buy and sell orders to place, 50 orders in total
-OFFER_DIFFERENCE = 0.005  # Difference between each successive buy or sell offer price, 0.005 = 0.5% price difference
+NUM_OFFERS = 20  # Number of buy and sell orders to place, 20 orders each
+OFFER_DIFFERENCE = 0.01  # Difference between each successive buy or sell offer price, 0.01 = 1% price difference
 
+# Fetch the latest market price dynamically from the entire market's order book
 def get_market_price():
     orderbook = exchange.GetOrderBook(pair, depth='50')
 
@@ -29,14 +32,17 @@ def get_market_price():
     best_bid = None
     best_ask = None
 
-    for order in orderbook['bids']:  
-        if best_bid is None or float(order[0]) > best_bid: 
+    # Find the best bid price
+    for order in orderbook['bids']:
+        if best_bid is None or float(order[0]) > best_bid:
             best_bid = float(order[0])
 
-    for order in orderbook['asks']:  
-        if best_ask is None or float(order[0]) < best_ask: 
+    # Find the best ask price
+    for order in orderbook['asks']:
+        if best_ask is None or float(order[0]) < best_ask:
             best_ask = float(order[0])
 
+    # If no valid bid or ask price found
     if best_bid is None or best_ask is None:
         print("❌ No valid bid or ask price found.")
         return None
@@ -45,6 +51,7 @@ def get_market_price():
     print(f"Best Bid: {best_bid}, Best Ask: {best_ask}, Mid Price: {mid_price}")
     return mid_price
 
+# Create buy and sell offers based on market price
 def create_offers(mid_price, spread_percentage, num_offers, offer_difference):
     buy_offers = []
     sell_offers = []
@@ -55,27 +62,33 @@ def create_offers(mid_price, spread_percentage, num_offers, offer_difference):
 
     print(f"Creating offers: Mid price = {mid_price}, Spread = {spread}, Buy price = {buy_price}, Sell price = {sell_price}")
 
+    # Create buy offers with decreasing prices
     for i in range(num_offers):
         buy_price_i = buy_price * (1 - i * offer_difference)
         buy_offers.append(buy_price_i)
 
+    # Create sell offers with increasing prices
     for i in range(num_offers):
         sell_price_i = sell_price * (1 + i * offer_difference)
         sell_offers.append(sell_price_i)
 
     return buy_offers, sell_offers
 
+# Get current USDT balance
 def get_balance_usdt():
     print("Fetching USDT balance...")
     balance = exchange.Balances()
-    print(f"USDT balance fetched: {balance}")
-    return balance.get('USDT', 0.0)
+    usdt_balance = next((item['balance'] for item in balance['user']['currencies'] if item['id'] == 'USDT'), 0.0)
+    print(f"USDT balance fetched: {usdt_balance}")
+    return usdt_balance
 
+# Place buy and sell orders
 def place_orders(buy_offers, sell_offers, usdt_amount, coin_amount):
     print(f"Placing orders with {len(buy_offers)} buy and {len(sell_offers)} sell offers...")
     buy_amount_per_order = usdt_amount / len(buy_offers)
     sell_amount_per_order = coin_amount / len(sell_offers)
 
+    # Place buy orders
     for buy_price in buy_offers:
         try:
             print(f"Placing buy order at {buy_price}...")
@@ -96,6 +109,7 @@ def place_orders(buy_offers, sell_offers, usdt_amount, coin_amount):
         
         time.sleep(1)
 
+    # Place sell orders
     for sell_price in sell_offers:
         try:
             print(f"Placing sell order at {sell_price}...")
@@ -123,6 +137,7 @@ if __name__ == '__main__':
     while True:
         print("\n🔄 Starting new cycle...")
 
+        # Adjust USDT and coin balance if they exceed the max limits
         if current_usdt_balance > MAX_USDT_AMOUNT:
             current_usdt_balance = MAX_USDT_AMOUNT
             print(f"⚠️ USDT capped at max: {MAX_USDT_AMOUNT}")
@@ -130,23 +145,29 @@ if __name__ == '__main__':
             current_coin_balance = MAX_COIN_AMOUNT
             print(f"⚠️ Coin capped at max: {MAX_COIN_AMOUNT}")
 
+        # Cancel all open orders for the market
         exchange.CancelAllOpenOrdersForMarket(pair)
 
+        # Calculate current market price
         mid_price = get_market_price() 
         if mid_price is None:
             print("❌ Could not get mid price. Skipping order placement.")
             time.sleep(900)
             continue
 
+        # Create buy and sell offers
         buy_offers, sell_offers = create_offers(mid_price, SPREAD_PERCENTAGE, NUM_OFFERS, OFFER_DIFFERENCE)
 
+        # Check if there's enough balance to place orders
         if current_usdt_balance > 0 and current_coin_balance > 0:
             place_orders(buy_offers, sell_offers, current_usdt_balance, current_coin_balance)
         else:
             print("⚠️ Not enough balance to place new orders.")
 
+        # Wait for the next cycle
         print("⏳ Waiting for the next cycle...\n")
-        time.sleep(900) # Time for make new Orders / Refresh (in Seconds 900 = 15 Minutes)
+        time.sleep(900)  ## Calculate and Create every 900 Seconds (15 Minutes) new Orders
 
+        # Update USDT balance
         current_usdt_balance = get_balance_usdt()
         print(f"💰 Updated USDT balance: {current_usdt_balance}")
