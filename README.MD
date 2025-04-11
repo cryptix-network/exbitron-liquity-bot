@@ -26,3 +26,5 @@ python3 exbitron_liquity_bot.py
 Before running the bot, update the API keys in the code under the variables section.
 API keys can be generated from the Exbitron web platform in the Settings or Profile section after enabling 2FA.
 
+## Usage
+The use of this software has not been extensively tested. Use is at your own risk; we assume no liability for its use. This software is provided free of charge and is open source.
