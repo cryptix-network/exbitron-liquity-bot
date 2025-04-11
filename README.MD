@@ -18,7 +18,7 @@ pip3 install requests
 To start the bot, use:
 
 ```
-python3 trade_bot.py
+python3 exbitron_liquity_bot.py
 ```
 
 ## API Key Setup
