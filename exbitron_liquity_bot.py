@@ -2,119 +2,151 @@ import time
 import exbitron_exchange_api as exchange
 
 ###
-### LIQUIDITY BOT FOR BUY AND SELL ORDERS ###
+### CRYPTIX LIQUIDITY BOT FOR BUY AND SELL ORDERS ###
 ###
 
 pair = 'CYTX-USDT'
-pairS = pair.split('-')
 
 # PUT HERE Your API Token created by Exbitron web app
-exchange.TOKEN = ''
+exchange.TOKEN = 'YOUR_API_KEY_HERE'
 
-# Set the middle price (this will be the center point between buy and sell)
-MID_PRICE = 0.0005  # Example middle price (this is between buy and sell price)
+# Starting values for the trading bot
+START_USDT_AMOUNT = 100.0  # Initial amount of USDT (Tether) to start with, in this case, 100.0 USDT
+START_COIN_AMOUNT = 100000.0  # Initial amount of coins to start with, in this case, 100,000 coins
+MAX_USDT_AMOUNT = 100.0  # Maximum USDT amount the bot is allowed to hold, capped at 100.0 USDT
+MAX_COIN_AMOUNT = 150000.0  # Maximum coin amount the bot is allowed to hold, capped at 150,000 coins
+SPREAD_PERCENTAGE = 5.0  # Percentage to determine the price spread between buy and sell orders, 5% spread
+NUM_OFFERS = 50  # Number of buy and sell orders to place, 50 orders in total
+OFFER_DIFFERENCE = 0.005  # Difference between each successive buy or sell offer price, 0.005 = 0.5% price difference
 
-# Set the start values for USDT and Coin
-START_USDT_AMOUNT = 50.0  # Starting amount in USDT for buying
-START_COIN_AMOUNT = 50000  # Starting amount of Coin for selling
+def get_market_price():
+    orderbook = exchange.GetOrderBook(pair, depth='50')
 
-# Set the maximum amounts for USDT and Coin (maximums that will never be exceeded)
-MAX_USDT_AMOUNT = 100.0  # Max USDT that can be used (e.g., never use more than 100 USDT)
-MAX_COIN_AMOUNT = 50000  # Max Coin that can be sold (e.g., never sell more than 50000 Coins)
+    if 'error' in orderbook:
+        print(f"❌ Error fetching the order book: {orderbook['error']}")
+        return None
 
-# Set the spread (e.g., 10% spread)
-SPREAD_PERCENTAGE = 10.0
+    best_bid = None
+    best_ask = None
 
-# Set the number of offers (e.g., 100 offers)
-NUM_OFFERS = 100
+    for order in orderbook['bids']:  
+        if best_bid is None or float(order[0]) > best_bid: 
+            best_bid = float(order[0])
 
-# Set the difference between each offer (e.g., 0.5% difference between each offer)
-OFFER_DIFFERENCE = 0.005  # 0.5% difference between offers
+    for order in orderbook['asks']:  
+        if best_ask is None or float(order[0]) < best_ask: 
+            best_ask = float(order[0])
 
+    if best_bid is None or best_ask is None:
+        print("❌ No valid bid or ask price found.")
+        return None
 
-# Function to create buy and sell offers based on the middle price, spread, and other parameters
+    mid_price = (best_bid + best_ask) / 2
+    print(f"Best Bid: {best_bid}, Best Ask: {best_ask}, Mid Price: {mid_price}")
+    return mid_price
+
 def create_offers(mid_price, spread_percentage, num_offers, offer_difference):
     buy_offers = []
     sell_offers = []
 
-    # Calculate the spread
     spread = mid_price * (spread_percentage / 100.0)
-
-    # Calculate the first buy and sell offer prices
     buy_price = mid_price - spread / 2
     sell_price = mid_price + spread / 2
 
-    # Create the buy offers
+    print(f"Creating offers: Mid price = {mid_price}, Spread = {spread}, Buy price = {buy_price}, Sell price = {sell_price}")
+
     for i in range(num_offers):
         buy_price_i = buy_price * (1 - i * offer_difference)
         buy_offers.append(buy_price_i)
 
-    # Create the sell offers
     for i in range(num_offers):
         sell_price_i = sell_price * (1 + i * offer_difference)
         sell_offers.append(sell_price_i)
 
     return buy_offers, sell_offers
 
-
-# Function to get the available USDT balance from your account
 def get_balance_usdt():
-    # Here you retrieve your USDT balance from the exchange
-    balance = exchange.Balances()  # Get the balance info
-    return balance['USDT']  # Return the available USDT balance
+    print("Fetching USDT balance...")
+    balance = exchange.Balances()
+    print(f"USDT balance fetched: {balance}")
+    return balance.get('USDT', 0.0)
 
-
-# Function to place orders
 def place_orders(buy_offers, sell_offers, usdt_amount, coin_amount):
+    print(f"Placing orders with {len(buy_offers)} buy and {len(sell_offers)} sell offers...")
     buy_amount_per_order = usdt_amount / len(buy_offers)
     sell_amount_per_order = coin_amount / len(sell_offers)
 
-    # Place buy orders
     for buy_price in buy_offers:
-        order_status = exchange.Order(buy_amount_per_order, pairS[1], buy_price, 'buy', 'limit')
-        if order_status is None or order_status['status'] != True or order_status['order_status'] != 'open':
-            print(f"Failed to place buy order at {buy_price}")
-            continue
-        print(f"Placed buy order at {buy_price}")
+        try:
+            print(f"Placing buy order at {buy_price}...")
+            result = exchange.Order(buy_amount_per_order / buy_price, pair, buy_price, 'buy', 'limit')
+            print(f"Buy order result: {result}")  
+            
+            if result.get('hasError') or result.get('status') != 'OK':
+                print(f"❌ Failed to place buy order at {buy_price}. Error: {result}")
+            elif result.get('order_status') == 'pending':
+                print(f"✅ Buy order at {buy_price} is pending. We will check later.")
+            else:
+                print(f"✅ Placed buy order at {buy_price}")
+        except Exception as e:
+            print(f"❌ Error placing buy order at {buy_price}: {e}")
+            if "Too many requests" in str(e):
+                print("⏳ Rate limit reached. Pausing for 10 seconds.")
+                time.sleep(10)
+        
+        time.sleep(1)
 
-    # Place sell orders
     for sell_price in sell_offers:
-        order_status = exchange.Order(sell_amount_per_order, pairS[0], sell_price, 'sell', 'limit')
-        if order_status is None or order_status['status'] != True or order_status['order_status'] != 'open':
-            print(f"Failed to place sell order at {sell_price}")
-            continue
-        print(f"Placed sell order at {sell_price}")
-
+        try:
+            print(f"Placing sell order at {sell_price}...")
+            result = exchange.Order(sell_amount_per_order, pair, sell_price, 'sell', 'limit')
+            print(f"Sell order result: {result}")  
+            
+            if result.get('hasError') or result.get('status') != 'OK':
+                print(f"❌ Failed to place sell order at {sell_price}. Error: {result}")
+            elif result.get('order_status') == 'pending':
+                print(f"✅ Sell order at {sell_price} is pending. We will check later.")
+            else:
+                print(f"✅ Placed sell order at {sell_price}")
+        except Exception as e:
+            print(f"❌ Error placing sell order at {sell_price}: {e}")
+            if "Too many requests" in str(e):
+                print("⏳ Rate limit reached. Pausing for 10 seconds.")
+                time.sleep(10)
+        
+        time.sleep(1)
 
 if __name__ == '__main__':
-    # Get the initial balance for USDT (you can change the initial amount if needed)
     current_usdt_balance = START_USDT_AMOUNT
     current_coin_balance = START_COIN_AMOUNT
 
     while True:
-        # Ensure that USDT used does not exceed the maximum allowed amount
+        print("\n🔄 Starting new cycle...")
+
         if current_usdt_balance > MAX_USDT_AMOUNT:
-            print(f"USDT balance exceeds the maximum limit of {MAX_USDT_AMOUNT}. Reducing to max limit.")
             current_usdt_balance = MAX_USDT_AMOUNT
-        
-        # Ensure that coins sold do not exceed the maximum allowed amount
+            print(f"⚠️ USDT capped at max: {MAX_USDT_AMOUNT}")
         if current_coin_balance > MAX_COIN_AMOUNT:
-            print(f"Coin balance exceeds the maximum limit of {MAX_COIN_AMOUNT}. Reducing to max limit.")
             current_coin_balance = MAX_COIN_AMOUNT
+            print(f"⚠️ Coin capped at max: {MAX_COIN_AMOUNT}")
 
-        # Create buy and sell offers based on the defined parameters
-        buy_offers, sell_offers = create_offers(MID_PRICE, SPREAD_PERCENTAGE, NUM_OFFERS, OFFER_DIFFERENCE)
+        exchange.CancelAllOpenOrdersForMarket(pair)
 
-        # If there is enough USDT to place buy orders, place the orders
-        if current_usdt_balance > 0:
+        mid_price = get_market_price() 
+        if mid_price is None:
+            print("❌ Could not get mid price. Skipping order placement.")
+            time.sleep(900)
+            continue
+
+        buy_offers, sell_offers = create_offers(mid_price, SPREAD_PERCENTAGE, NUM_OFFERS, OFFER_DIFFERENCE)
+
+        if current_usdt_balance > 0 and current_coin_balance > 0:
             place_orders(buy_offers, sell_offers, current_usdt_balance, current_coin_balance)
         else:
-            print("Not enough USDT to place buy orders.")
+            print("⚠️ Not enough balance to place new orders.")
 
-        # Wait for a specified interval before placing the next set of orders
-        print("Waiting for next cycle...")
-        time.sleep(60)  # Adjust the sleep time based on your needs
+        print("⏳ Waiting for the next cycle...\n")
+        time.sleep(900) # Time for make new Orders / Refresh (in Seconds 900 = 15 Minutes)
 
-        # After each cycle, get the new balance of USDT (which includes proceeds from selling coins)
         current_usdt_balance = get_balance_usdt()
-        print(f"Current USDT balance: {current_usdt_balance}")
+        print(f"💰 Updated USDT balance: {current_usdt_balance}")

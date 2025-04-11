@@ -2,10 +2,12 @@ import requests
 import json
 
 ### https://github.com/simonjriddix/exbitron-api-python/blob/main/exbitron_exchange_api.py ###
+### Cryptis: Addet CancelAllOpenOrdersForMarket
+### Cryptis: Addet Debug
 
 API_ENDPOINT = "https://api.exbitron.digital/api/v1"
-TOKEN = ""
-UserAgent = 'Exbitron/PyAppAPI'
+TOKEN = 'YOUR_API_KEY_HERE'
+UserAgent = 'Exbitron/CryptixBot'
 
 def ReturnDataOrError(response):
     answer=json.loads(response.text)
@@ -26,11 +28,17 @@ def ReturnDirectOrError(response):
     return answer
 
 def ReturnStatusOrError(response):
-    answer=json.loads(response.text)
-    if not answer['hasError'] and 'errorMessage' in answer:
-        raise Exception(answer['errorMessage'])
-    return answer['status']=='OK'
-
+    try:
+        answer = response.json()
+        if "success" in answer and answer["success"]:
+            return True
+        else:
+            print(f"[API] Answer: {answer}")  
+            return False
+    except Exception as e:
+        print(f"[EXCEPTION] {e}")
+        return False
+    
 ### BALANCES ###
 
 def Balances(zero: bool = False):
@@ -196,13 +204,38 @@ def OrderBatch():
 
 def OrderCancelBatch(orders: list[str]):
     url = f"{API_ENDPOINT}/order/cancel/batch"
-    response = requests.post(url, 
-                 headers={"User-Agent": UserAgent, "Authorization": f"Bearer {TOKEN}"},
-                 data=json.dumps({"orders": [ 
-                     orders
-                     ]})
-                 )
+    response = requests.post(
+        url,
+        headers={
+            "User-Agent": UserAgent,
+            "Authorization": f"Bearer {TOKEN}",
+            "Content-Type": "application/json"
+        },
+        data=json.dumps({"orders": orders}) 
+    )
     return ReturnStatusOrError(response)
+
+def CancelAllOpenOrdersForMarket(market: str):
+    try:
+        open_orders_wrapper = GetMarketOrder(market, "open")
+        open_orders = open_orders_wrapper["userOrders"]["result"]
+
+        print(f"[DEBUG] open_orders in {market}: {open_orders}")
+
+        order_ids = [order["id"] for order in open_orders]
+
+        if not order_ids:
+            print(f"✅ No open orders in {market}")
+            return
+
+        print(f"🔄 Deleting {len(order_ids)} orders in {market}...")
+        response = OrderCancelBatch(order_ids)
+
+        if isinstance(response, dict) and response.get('status') == 'OK' and 'cancelled_orders' in response:
+            print(f"✅ Successfully deleted {len(response['cancelled_orders'])} orders.")
+
+    except Exception as e:
+        print(f"❌ Error with {market}: {e}")
 
 def GetMarketOrder(market: str, status: str, page: int=None, limit: int=None):
     url = f"{API_ENDPOINT}/order/market/{market}?status={status}"
@@ -214,6 +247,7 @@ def GetMarketOrder(market: str, status: str, page: int=None, limit: int=None):
                  headers={"User-Agent": UserAgent, "Authorization": f"Bearer {TOKEN}"},
                  )
     return ReturnDataOrError(response)
+
 
 def GetOrder(id: str):
     url = f"{API_ENDPOINT}/order/{id}/cancel"
