@@ -61,5 +61,6 @@ It uses real buy/sell offers (or both, depending on the settings), which are upd
 
 Free to use and no Dev Fees
 
-Must be run with Python. We will provide an executable version without Python soon.
+Must be run with Python. We will provide an executable version without Python soon. 
+All you need is an Exbitron API, which you can create for free in your account. And Account Balances.
 
