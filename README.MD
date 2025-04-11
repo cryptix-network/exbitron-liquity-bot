@@ -30,22 +30,36 @@ API keys can be generated from the Exbitron web platform in the Settings or Prof
 The use of this software has not been extensively tested. Use is at your own risk; we assume no liability for its use. This software is provided free of charge and is open source.
 
 
-## Explanation of the Cryptix Liquidity Bot
+## Cryptix Liquidity Trading Bot for Exbitron
 
-The Cryptix Liquidity Bot is designed to automate the process of placing buy and sell orders on the Exbitron exchange. It operates within predefined parameters to maximize trading efficiency and ensure liquidity on the market. The bot performs the following key functions:
+The Cryptix Liquidity Bot automatically places buy and sell orders on Exbitron to maintain market liquidity and to reduce the trading spread for a fair market. 
 
-    Market Price Fetching: The bot continuously fetches the latest market price for the selected trading pair (e.g., CYTX-USDT). It retrieves the order book data (top 50 bids and asks) to calculate the midpoint price between the best bid and best ask. This mid price serves as a reference for placing orders.
+Here’s how it works:
+Key Config Values:  (can be customized to your needs, with more or less spread. More or less USDT/CYTX, etc. )
 
-    Order Creation: Based on the calculated market price, the bot creates a series of buy and sell offers. The offers are spread out with a certain percentage (default 5%) between buy and sell orders. The number of orders can be customized, and each successive order price is adjusted with a small price difference (default 0.01), ensuring an optimized price spread.
+- START_USDT_AMOUNT: Initial USDT balance (e.g., 100 USDT)
+- START_COIN_AMOUNT: Initial coin balance (e.g., 20,000 coins)
+- MAX_USDT_AMOUNT: Max USDT the bot can hold (e.g., 125 USDT)
+- MAX_COIN_AMOUNT: Max coins the bot can hold (e.g., 50,000 coins)
+- SPREAD_PERCENTAGE: Price spread between buy and sell orders (e.g., 5%)
+- NUM_OFFERS: Number of buy/sell orders (e.g., 20 orders)
+- OFFER_DIFFERENCE: Price difference between successive offers (e.g., 0.01)
 
-    Balance Management: The bot starts with an initial amount of USDT (Tether) and coins. It checks and updates the balance regularly. The bot ensures that the balance doesn't exceed predefined maximum limits for both USDT and coin amounts. If the balance reaches the maximum, it will no longer place additional buy or sell orders.
+Workflow:
+- Fetches the latest market price (mid price between the best bid and ask).
+- Creates buy and sell offers with a spread based on the market price.
+- Places buy orders at lower prices and sell orders at higher prices.
+- Ensures balance stays within the max limits for both USDT and coins.
+-  Cancels old orders before placing new ones.
+-  Repeats the cycle every 15 minutes, updating balances and adjusting orders.
 
-    Order Placement: After calculating the offers, the bot places the orders on the exchange. The buy orders are placed with lower prices, and the sell orders are placed with higher prices. It evenly distributes the available USDT for buy orders and coins for sell orders across multiple offers.
+What the liquidity/trading bot DOES NOT do:
+- It does not buy or sell coins itself -> wash trading / fake volume
+- It does not create fake offers / jump-away orders
 
-    Error Handling & Rate Limits: The bot includes error handling mechanisms to ensure it continues operating smoothly even when encountering issues like network errors or rate limits imposed by the exchange. If too many requests are made in a short time, the bot will pause for a short period to comply with the rate limits.
+It uses real buy/sell offers (or both, depending on the settings), which are updated every 15 minutes (or depending on the settings). It is designed to provide a stable market and reduce spreads. Useful for market makers and spread traders or for an effective purchase/sale of coins.
 
-    Order Cancellation: Before placing new orders, the bot cancels all previous open orders to ensure the latest orders are the ones being considered by the market. This helps maintain an accurate and up-to-date order book.
+Free to use and no Dev Fees
 
-    Cycle & Timing: The bot works in cycles, and after completing each cycle, it waits for a defined amount of time (e.g., 15 minutes) before placing new orders. This interval can be adjusted based on trading strategies and market conditions.
+Must be run with Python; installation instructions are available on Github. We will provide an executable version without Python soon.
 
-The Cryptix Liquidity Bot is a useful tool for providing liquidity and ensuring that buy and sell orders are placed in a manner that maintains a stable market price for the selected trading pair.
