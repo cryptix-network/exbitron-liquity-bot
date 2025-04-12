@@ -130,7 +130,22 @@ def place_orders(buy_offers, sell_offers, usdt_amount, coin_amount):
         
         time.sleep(1)
 
+
+def show_ascii_art():
+    print("""
+   _____ _______     _______ _______ _______   __
+  / ____|  __ \ \   / /  __ \__   __|_   _\ \ / /
+ | |    | |__) \ \_/ /| |__) | | |    | |  \ V / 
+ | |    |  _  / \   / |  ___/  | |    | |   > <  
+ | |____| | \ \  | |  | |      | |   _| |_ / . \ 
+  \_____|_|  \_\ |_|  |_|      |_|  |_____/_/ \_\
+                                                 
+    """)
+
 if __name__ == '__main__':
+    # Show the ASCII art once at the start
+    show_ascii_art()
+
     current_usdt_balance = START_USDT_AMOUNT
     current_coin_balance = START_COIN_AMOUNT
 
@@ -165,7 +180,7 @@ if __name__ == '__main__':
         else:
             print("⚠️ Not enough balance to place new orders.")
 
-        #  Wait for the next cycle
+        # Wait for the next cycle
         print("⏳ Waiting for the next cycle...")
 
         for remaining in range(900, 0, -1):  ## Calculate and Create every 900 Seconds (15 Minutes) new Orders
@@ -174,6 +189,6 @@ if __name__ == '__main__':
             print(f"\r⏳ Next cycle in: {time_format}", end="")
             time.sleep(1)
 
-        #  Update USDT balance for next loop
+        # Update USDT balance for next loop
         current_usdt_balance = get_balance_usdt()
         print(f"💰 Updated USDT balance: {current_usdt_balance}")

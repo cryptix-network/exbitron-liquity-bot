@@ -102,13 +102,28 @@ def place_orders(buy_offers, sell_offers, usdt_amount, coin_amount):
                 time.sleep(10)
         time.sleep(1)
 
+def show_ascii_art():
+    print("""
+   _____ _______     _______ _______ _______   __
+  / ____|  __ \ \   / /  __ \__   __|_   _\ \ / /
+ | |    | |__) \ \_/ /| |__) | | |    | |  \ V / 
+ | |    |  _  / \   / |  ___/  | |    | |   > <  
+ | |____| | \ \  | |  | |      | |   _| |_ / . \ 
+  \_____|_|  \_\ |_|  |_|      |_|  |_____/_/ \_\
+                                                 
+    """)
+
 if __name__ == '__main__':
+    # Show the ASCII art once at the start
+    show_ascii_art()
+
     current_usdt_balance = START_USDT_AMOUNT
     current_coin_balance = START_COIN_AMOUNT
 
     while True:
         print("\n🔄 Starting new cycle...")
 
+        # Adjust balances if they exceed maximum
         if current_usdt_balance > MAX_USDT_AMOUNT:
             current_usdt_balance = MAX_USDT_AMOUNT
             print(f"⚠️ USDT capped at max: {MAX_USDT_AMOUNT}")
@@ -116,6 +131,7 @@ if __name__ == '__main__':
             current_coin_balance = MAX_COIN_AMOUNT
             print(f"⚠️ Coin capped at max: {MAX_COIN_AMOUNT}")
 
+        # Calculate current market price BEFORE deleting orders
         mid_price = get_market_price()
         if mid_price is None:
             print("❌ Could not get mid price. Skipping order placement.")
@@ -126,13 +142,16 @@ if __name__ == '__main__':
         print("⏳ Wait 10 seconds after deleting orders...")
         time.sleep(10)
 
+        # Create new offers
         buy_offers, sell_offers = create_offers(mid_price, SPREAD_PERCENTAGE, NUM_OFFERS, OFFER_DIFFERENCE)
 
+        # Place new buy/sell orders
         if current_usdt_balance > 0 and current_coin_balance > 0:
             place_orders(buy_offers, sell_offers, current_usdt_balance, current_coin_balance)
         else:
             print("⚠️ Not enough balance to place new orders.")
 
+        # Wait for the next cycle
         print(f"⏳ Waiting for the next cycle ({SLEEP_TIME // 60} min)...")
 
         for remaining in range(SLEEP_TIME, 0, -1):
@@ -141,5 +160,6 @@ if __name__ == '__main__':
             print(f"\r⏳ Next cycle in: {time_format}", end="", flush=True)
             time.sleep(1)
 
+        # Update USDT balance for next loop
         current_usdt_balance = get_balance_usdt()
         print(f"💰 Updated USDT balance: {current_usdt_balance}")

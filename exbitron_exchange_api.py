@@ -206,7 +206,7 @@ def OrderBatch():
 def OrderCancelBatch(orders: list[str]):
     url = f"{API_ENDPOINT}/order/cancel/batch"
     
-    time.sleep(1) 
+    time.sleep(5) 
     
     response = requests.post(
         url,
@@ -219,36 +219,35 @@ def OrderCancelBatch(orders: list[str]):
     )
     return ReturnStatusOrError(response)
 
+
 def CancelAllOpenOrdersForMarket(market: str):
     try:
         time.sleep(1)
         open_orders_wrapper = GetMarketOrder(market, "open")
         open_orders = open_orders_wrapper["userOrders"]["result"]
 
-        print(f"[DEBUG] open_orders in {market}: {open_orders}")
-
         order_ids = [order["id"] for order in open_orders]
 
-        if not order_ids:
-            print(f"✅ No open orders in {market}")
-            return
+        num_orders = len(order_ids)
+        if num_orders == 0:
+            print(f"✅ No open orders found for {market}.")
+            return  
 
-        print(f"🔄 Deleting {len(order_ids)} orders in {market}...")
+        print(f"🚀 {num_orders} open orders loaded for {market}. They will be deleted now.")
+
         response = OrderCancelBatch(order_ids)
 
-        if isinstance(response, dict) and response.get('status') == 'OK' and 'cancelled_orders' in response:
-            print(f"✅ Successfully deleted {len(response['cancelled_orders'])} orders.")
+        if response == False:
+            print(f"✅ No errors, process completed.")
+            return 
         else:
-            print(f"⚠️ First attempt to cancel orders failed. Retrying in 10 seconds...")
-            time.sleep(10)
-            response = OrderCancelBatch(order_ids)
-            if isinstance(response, dict) and response.get('status') == 'OK' and 'cancelled_orders' in response:
-                print(f"✅ Successfully deleted {len(response['cancelled_orders'])} orders on retry.")
-            else:
-                print(f"❌ Retry also failed. Response: {response}")
+            print(f"❌ Unexpected response: {response}. Retrying in 10 seconds...")
+            time.sleep(10) 
+            return CancelAllOpenOrdersForMarket(market) 
 
     except Exception as e:
         print(f"❌ Error with {market}: {e}")
+
 
 def GetMarketOrder(market: str, status: str, page: int=None, limit: int=None):
     url = f"{API_ENDPOINT}/order/market/{market}?status={status}"
