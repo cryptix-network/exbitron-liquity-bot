@@ -1,5 +1,6 @@
 import requests
 import json
+import time
 
 ### https://github.com/simonjriddix/exbitron-api-python/blob/main/exbitron_exchange_api.py ###
 ### Cryptis: Addet CancelAllOpenOrdersForMarket
@@ -204,6 +205,9 @@ def OrderBatch():
 
 def OrderCancelBatch(orders: list[str]):
     url = f"{API_ENDPOINT}/order/cancel/batch"
+    
+    time.sleep(1) 
+    
     response = requests.post(
         url,
         headers={
@@ -217,6 +221,7 @@ def OrderCancelBatch(orders: list[str]):
 
 def CancelAllOpenOrdersForMarket(market: str):
     try:
+        time.sleep(1)
         open_orders_wrapper = GetMarketOrder(market, "open")
         open_orders = open_orders_wrapper["userOrders"]["result"]
 
@@ -233,6 +238,14 @@ def CancelAllOpenOrdersForMarket(market: str):
 
         if isinstance(response, dict) and response.get('status') == 'OK' and 'cancelled_orders' in response:
             print(f"✅ Successfully deleted {len(response['cancelled_orders'])} orders.")
+        else:
+            print(f"⚠️ First attempt to cancel orders failed. Retrying in 10 seconds...")
+            time.sleep(10)
+            response = OrderCancelBatch(order_ids)
+            if isinstance(response, dict) and response.get('status') == 'OK' and 'cancelled_orders' in response:
+                print(f"✅ Successfully deleted {len(response['cancelled_orders'])} orders on retry.")
+            else:
+                print(f"❌ Retry also failed. Response: {response}")
 
     except Exception as e:
         print(f"❌ Error with {market}: {e}")
