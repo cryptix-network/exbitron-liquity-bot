@@ -166,7 +166,7 @@ if __name__ == '__main__':
 
         #  Wait for the next cycle
         print("⏳ Waiting for the next cycle...\n")
-        time.sleep(900)
+        time.sleep(900)  ## Calculate and Create every 900 Seconds (15 Minutes) new Orders
 
         #  Update USDT balance for next loop
         current_usdt_balance = get_balance_usdt()
