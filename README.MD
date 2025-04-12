@@ -64,3 +64,6 @@ Free to use and no Dev Fees
 Must be run with Python. We will provide an executable version without Python soon. 
 All you need is an Exbitron API, which you can create for free in your account. And Account Balances.
 
+The bot isn't yet field-tested. Therefore, it should be tested and observed with small values ​​first, especially due to the maximum order values. This hasn't been tested yet. It's also important to note that the bot deletes and resets all orders every 15 minutes, according to the settings. This includes manual orders.
+I therefore recommend creating a new account with a fixed USDT amount to Test. This way, even manual trading won't cause any conflicts.
+

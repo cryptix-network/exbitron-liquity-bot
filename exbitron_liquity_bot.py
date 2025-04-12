@@ -137,7 +137,7 @@ if __name__ == '__main__':
     while True:
         print("\n🔄 Starting new cycle...")
 
-        # Adjust USDT and coin balance if they exceed the max limits
+        # Adjust balances if they exceed maximum
         if current_usdt_balance > MAX_USDT_AMOUNT:
             current_usdt_balance = MAX_USDT_AMOUNT
             print(f"⚠️ USDT capped at max: {MAX_USDT_AMOUNT}")
@@ -145,29 +145,29 @@ if __name__ == '__main__':
             current_coin_balance = MAX_COIN_AMOUNT
             print(f"⚠️ Coin capped at max: {MAX_COIN_AMOUNT}")
 
-        # Cancel all open orders for the market
-        exchange.CancelAllOpenOrdersForMarket(pair)
-
-        # Calculate current market price
-        mid_price = get_market_price() 
+        # Calculate current market price BEFORE deleting orders
+        mid_price = get_market_price()
         if mid_price is None:
             print("❌ Could not get mid price. Skipping order placement.")
             time.sleep(900)
             continue
 
-        # Create buy and sell offers
+        # Cancel all open orders AFTER getting price
+        exchange.CancelAllOpenOrdersForMarket(pair)
+
+        # Create new offers
         buy_offers, sell_offers = create_offers(mid_price, SPREAD_PERCENTAGE, NUM_OFFERS, OFFER_DIFFERENCE)
 
-        # Check if there's enough balance to place orders
+        # Place new buy/sell orders
         if current_usdt_balance > 0 and current_coin_balance > 0:
             place_orders(buy_offers, sell_offers, current_usdt_balance, current_coin_balance)
         else:
             print("⚠️ Not enough balance to place new orders.")
 
-        # Wait for the next cycle
+        #  Wait for the next cycle
         print("⏳ Waiting for the next cycle...\n")
         time.sleep(900)  ## Calculate and Create every 900 Seconds (15 Minutes) new Orders
 
-        # Update USDT balance
+        #  Update USDT balance for next loop
         current_usdt_balance = get_balance_usdt()
         print(f"💰 Updated USDT balance: {current_usdt_balance}")
