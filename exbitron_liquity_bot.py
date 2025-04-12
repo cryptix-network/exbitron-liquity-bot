@@ -152,8 +152,9 @@ if __name__ == '__main__':
             time.sleep(900)
             continue
 
-        # Cancel all open orders AFTER getting price
         exchange.CancelAllOpenOrdersForMarket(pair)
+        print("⏳ Wait 10 seconds after deleting orders...")
+        time.sleep(10)
 
         # Create new offers
         buy_offers, sell_offers = create_offers(mid_price, SPREAD_PERCENTAGE, NUM_OFFERS, OFFER_DIFFERENCE)
@@ -165,8 +166,13 @@ if __name__ == '__main__':
             print("⚠️ Not enough balance to place new orders.")
 
         #  Wait for the next cycle
-        print("⏳ Waiting for the next cycle...\n")
-        time.sleep(900)  ## Calculate and Create every 900 Seconds (15 Minutes) new Orders
+        print("⏳ Waiting for the next cycle...")
+
+        for remaining in range(900, 0, -1):  ## Calculate and Create every 900 Seconds (15 Minutes) new Orders
+            mins, secs = divmod(remaining, 60)
+            time_format = f"{mins:02d}:{secs:02d}"
+            print(f"\r⏳ Next cycle in: {time_format}", end="")
+            time.sleep(1)
 
         #  Update USDT balance for next loop
         current_usdt_balance = get_balance_usdt()

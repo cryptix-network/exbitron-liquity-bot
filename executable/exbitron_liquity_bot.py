@@ -123,6 +123,8 @@ if __name__ == '__main__':
             continue
 
         exchange.CancelAllOpenOrdersForMarket(pair)
+        print("⏳ Wait 10 seconds after deleting orders...")
+        time.sleep(10)
 
         buy_offers, sell_offers = create_offers(mid_price, SPREAD_PERCENTAGE, NUM_OFFERS, OFFER_DIFFERENCE)
 
@@ -131,8 +133,13 @@ if __name__ == '__main__':
         else:
             print("⚠️ Not enough balance to place new orders.")
 
-        print("⏳ Waiting for the next cycle...\n")
-        time.sleep(SLEEP_TIME)
+        print(f"⏳ Waiting for the next cycle ({SLEEP_TIME // 60} min)...")
+
+        for remaining in range(SLEEP_TIME, 0, -1):
+            mins, secs = divmod(remaining, 60)
+            time_format = f"{mins:02d}:{secs:02d}"
+            print(f"\r⏳ Next cycle in: {time_format}", end="", flush=True)
+            time.sleep(1)
 
         current_usdt_balance = get_balance_usdt()
         print(f"💰 Updated USDT balance: {current_usdt_balance}")
