@@ -8,6 +8,7 @@ Additionally, this repository includes an example of a simple liquity bot. It is
 ## Exe Version
 
 Edit the config file using a text editor and add the Exbitron API. Then set the values ​​for quantity, spread, and orders.
+
 That's it, run the executable.
 
 
