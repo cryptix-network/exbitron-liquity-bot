@@ -5,7 +5,13 @@ More information about the API endpoints can be found at: [Exbitron API Document
 
 Additionally, this repository includes an example of a simple liquity bot. It is not a classic trading bot, it will still offer deals based on the settings. 
 
-## Installation
+## Exe Version
+
+Edit the config file using a text editor and add the Exbitron API. Then set the values ​​for quantity, spread, and orders.
+That's it, run the executable.
+
+
+## Python Version Installation
 
 To run the example, you need to install the `requests` package:  
 
