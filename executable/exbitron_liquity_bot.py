@@ -65,6 +65,13 @@ def get_balance_usdt():
     print(f"USDT balance fetched: {usdt_balance}")
     return usdt_balance
 
+def get_balance_coin():
+    print("Fetching COIN balance...")
+    balance = exchange.Balances()
+    coin_balance = next((item['balance'] for item in balance['user']['currencies'] if item['id'] == 'CYTX'), 0.0)
+    print(f"Coin balance fetched: {coin_balance}")
+    return coin_balance
+
 def place_orders(buy_offers, sell_offers, usdt_amount, coin_amount):
     print(f"Placing orders with {len(buy_offers)} buy and {len(sell_offers)} sell offers...")
     buy_amount_per_order = usdt_amount / len(buy_offers)
@@ -114,7 +121,6 @@ def show_ascii_art():
     """)
 
 if __name__ == '__main__':
-    # Show the ASCII art once at the start
     show_ascii_art()
 
     current_usdt_balance = START_USDT_AMOUNT
@@ -141,6 +147,13 @@ if __name__ == '__main__':
         exchange.CancelAllOpenOrdersForMarket(pair)
         print("⏳ Wait 10 seconds after deleting orders...")
         time.sleep(10)
+
+        # Update balances after deleting orders
+        current_usdt_balance = get_balance_usdt()
+        current_coin_balance = get_balance_coin()
+        print(f"💰 Updated USDT balance: {current_usdt_balance}")
+        print(f"🪙 Updated Coin balance: {current_coin_balance}")
+        time.sleep(1)
 
         # Create new offers
         buy_offers, sell_offers = create_offers(mid_price, SPREAD_PERCENTAGE, NUM_OFFERS, OFFER_DIFFERENCE)

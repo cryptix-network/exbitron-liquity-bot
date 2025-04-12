@@ -82,6 +82,14 @@ def get_balance_usdt():
     print(f"USDT balance fetched: {usdt_balance}")
     return usdt_balance
 
+# Get current COIN balance
+def get_balance_coin():
+    print("Fetching COIN balance...")
+    balance = exchange.Balances()
+    coin_balance = next((item['balance'] for item in balance['user']['currencies'] if item['id'] == 'CYTX'), 0.0)
+    print(f"Coin balance fetched: {coin_balance}")
+    return coin_balance
+
 # Place buy and sell orders
 def place_orders(buy_offers, sell_offers, usdt_amount, coin_amount):
     print(f"Placing orders with {len(buy_offers)} buy and {len(sell_offers)} sell offers...")
@@ -171,6 +179,13 @@ if __name__ == '__main__':
         print("⏳ Wait 10 seconds after deleting orders...")
         time.sleep(10)
 
+        # Update balances after deleting orders
+        current_usdt_balance = get_balance_usdt()
+        current_coin_balance = get_balance_coin()
+        print(f"💰 Updated USDT balance: {current_usdt_balance}")
+        print(f"🪙 Updated Coin balance: {current_coin_balance}")
+        time.sleep(1)
+
         # Create new offers
         buy_offers, sell_offers = create_offers(mid_price, SPREAD_PERCENTAGE, NUM_OFFERS, OFFER_DIFFERENCE)
 
@@ -188,7 +203,3 @@ if __name__ == '__main__':
             time_format = f"{mins:02d}:{secs:02d}"
             print(f"\r⏳ Next cycle in: {time_format}", end="")
             time.sleep(1)
-
-        # Update USDT balance for next loop
-        current_usdt_balance = get_balance_usdt()
-        print(f"💰 Updated USDT balance: {current_usdt_balance}")
