@@ -2,7 +2,10 @@ import time
 import configparser
 import exbitron_exchange_api as exchange
 
-### KONFIGURATION LADEN ###
+###
+### CRYPTIX LIQUIDITY BOT FOR BUY AND SELL ORDERS ###
+###
+
 config = configparser.ConfigParser()
 config.read('config.txt')
 
