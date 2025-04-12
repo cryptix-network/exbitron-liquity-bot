@@ -20,7 +20,7 @@ To run the example, you need to install the `requests` package:
 pip3 install requests
 ```
 
-## Running the Trading Bot
+Running the Trading Bot in Python
 
 To start the bot, use:
 
