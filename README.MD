@@ -12,7 +12,9 @@ Edit the config file using a text editor and add the Exbitron API. Then set the 
 That's it, run the executable.
 
 
-## Python Version Installation
+## Python Version 
+
+Installation:
 
 To run the example, you need to install the `requests` package:  
 
@@ -20,7 +22,7 @@ To run the example, you need to install the `requests` package:
 pip3 install requests
 ```
 
-Running the Trading Bot in Python
+Running:
 
 To start the bot, use:
 
