@@ -74,7 +74,6 @@ def create_offers(mid_price, spread_percentage, num_offers, offer_difference):
 
     return buy_offers, sell_offers
 
-# Get current USDT balance
 def get_balance_usdt():
     print("Fetching USDT balance...")
     balance = exchange.Balances()
@@ -82,11 +81,10 @@ def get_balance_usdt():
     print(f"USDT balance fetched: {usdt_balance}")
     return usdt_balance
 
-# Get current COIN balance
 def get_balance_coin():
-    print("Fetching COIN balance...")
+    print("Fetching Coin balance...")
     balance = exchange.Balances()
-    coin_balance = next((item['balance'] for item in balance['user']['currencies'] if item['id'] == 'CYTX'), 0.0)
+    coin_balance = next((item['balance'] for item in balance['user']['currencies'] if item['id'] == 'CYTX'), 0.0)  
     print(f"Coin balance fetched: {coin_balance}")
     return coin_balance
 
@@ -151,7 +149,6 @@ def show_ascii_art():
     """)
 
 if __name__ == '__main__':
-    # Show the ASCII art once at the start
     show_ascii_art()
 
     current_usdt_balance = START_USDT_AMOUNT
@@ -168,37 +165,36 @@ if __name__ == '__main__':
             current_coin_balance = MAX_COIN_AMOUNT
             print(f"⚠️ Coin capped at max: {MAX_COIN_AMOUNT}")
 
-        # Calculate current market price BEFORE deleting orders
+        # Calculate current market price
         mid_price = get_market_price()
         if mid_price is None:
             print("❌ Could not get mid price. Skipping order placement.")
-            time.sleep(900)
+            time.sleep(900)  # Sleep for 15 minutes (900 seconds)
             continue
 
+        # Cancel all orders before placing new ones
         exchange.CancelAllOpenOrdersForMarket(pair)
         print("⏳ Wait 10 seconds after deleting orders...")
         time.sleep(10)
 
-        # Update balances after deleting orders
-        current_usdt_balance = get_balance_usdt()
-        current_coin_balance = get_balance_coin()
-        print(f"💰 Updated USDT balance: {current_usdt_balance}")
-        print(f"🪙 Updated Coin balance: {current_coin_balance}")
-        time.sleep(1)
+        # Fetch the balance again
+        updated_usdt_balance = get_balance_usdt()
+        updated_coin_balance = get_balance_coin()
 
-        # Create new offers
-        buy_offers, sell_offers = create_offers(mid_price, SPREAD_PERCENTAGE, NUM_OFFERS, OFFER_DIFFERENCE)
+        print(f"💰 Updated USDT balance: {updated_usdt_balance}")
+        print(f"💰 Updated Coin balance: {updated_coin_balance}")
 
-        # Place new buy/sell orders
-        if current_usdt_balance > 0 and current_coin_balance > 0:
-            place_orders(buy_offers, sell_offers, current_usdt_balance, current_coin_balance)
+        # Place orders if there are sufficient funds
+        if updated_usdt_balance > 0 and updated_coin_balance > 0:
+            buy_offers, sell_offers = create_offers(mid_price, SPREAD_PERCENTAGE, NUM_OFFERS, OFFER_DIFFERENCE)
+            place_orders(buy_offers, sell_offers, updated_usdt_balance, updated_coin_balance)
         else:
             print("⚠️ Not enough balance to place new orders.")
 
         # Wait for the next cycle
         print("⏳ Waiting for the next cycle...")
 
-        for remaining in range(900, 0, -1):  ## Calculate and Create every 900 Seconds (15 Minutes) new Orders
+        for remaining in range(900, 0, -1):  # 900 seconds = 15 minutes
             mins, secs = divmod(remaining, 60)
             time_format = f"{mins:02d}:{secs:02d}"
             print(f"\r⏳ Next cycle in: {time_format}", end="")
