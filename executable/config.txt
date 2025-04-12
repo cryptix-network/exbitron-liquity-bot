@@ -1,0 +1,28 @@
+[DEFAULT]
+
+# PUT HERE Your API Token created by Exbitron web app
+API_TOKEN=YOUR_API_KEY_HERE
+
+# Initial amount of USDT (Tether) to start with, in this case, 100.0 USDT
+START_USDT_AMOUNT=100.0
+
+# Initial amount of coins to start with, in this case, 10,000 coins
+START_COIN_AMOUNT=10000.0
+
+# Maximum USDT amount the bot is allowed to hold, capped at 150.0 USDT
+MAX_USDT_AMOUNT=150.0
+
+# Maximum coin amount the bot is allowed to hold, capped at 20,000 coins
+MAX_COIN_AMOUNT=20000.0
+
+# Percentage to determine the price spread between buy and sell orders, 5% spread
+SPREAD_PERCENTAGE=5.0
+
+# Number of buy and sell orders to place, 20 orders each
+NUM_OFFERS=20
+
+# Difference between each successive buy or sell offer price, 0.01 = 1% price difference
+OFFER_DIFFERENCE=0.01
+
+# Calculate and create new orders every 1200 seconds (20 minutes)
+SLEEP_TIME=1200
