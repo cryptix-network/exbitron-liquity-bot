@@ -29,14 +29,13 @@ pair = 'CYTX-USDT'
 
 clients = set()
 
-# Function to send messages to all connected clients
 async def send_to_clients(message):
     for client in clients:
         try:
             await client.send(message)
         except Exception as e:
             print(f"❌ Error sending to client: {e}")
-    print(message)  # Auch in die Konsole ausgeben
+    print(message)
 
 async def websocket_handler(websocket, path):
     print("🌐 WebSocket client connected")
@@ -52,7 +51,6 @@ async def start_websocket_server():
     print("WebSocket Server running on ws://localhost:8765/")
     await server.wait_closed()
 
-# Start the WebSocket server in the main event loop
 def run_websocket_server():
     asyncio.run(start_websocket_server())
 
@@ -197,11 +195,14 @@ async def main():
             await send_to_clients("⚠️ Not enough balance to place orders.")
 
         await send_to_clients(f"⏳ Waiting {SLEEP_TIME // 60} minutes...")
+        await send_to_clients(f"⏳ Next cycle: waiting {SLEEP_TIME // 60} minutes...")
 
         for remaining in range(SLEEP_TIME, 0, -1):
             mins, secs = divmod(remaining, 60)
-            await send_to_clients(f"\r⏳ Next cycle in: {mins:02d}:{secs:02d}", end="", flush=True)
+            print(f"\r⏳ Next cycle in: {mins:02d}:{secs:02d}", end='', flush=True)
             await asyncio.sleep(1)
+
+        print()
 
 # Run the main loop with asyncio
 if __name__ == '__main__':
