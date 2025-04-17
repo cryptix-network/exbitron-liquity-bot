@@ -1,10 +1,11 @@
 import time
 import configparser
 import exbitron_exchange_api as exchange
+import asyncio
+import websockets
+import threading
 
-###
-### CRYPTIX LIQUIDITY BOT FOR BUY AND SELL ORDERS ###
-###
+# ========== CONFIG ==========
 
 config = configparser.ConfigParser()
 config.read('config.txt')
@@ -24,25 +25,60 @@ SLEEP_TIME = int(config['DEFAULT']['SLEEP_TIME'])
 
 pair = 'CYTX-USDT'
 
-def get_market_price():
-    orderbook = exchange.GetOrderBook(pair, depth='50')
+# ========== WEBSOCKET SERVER ==========
 
+clients = set()
+
+# Function to send messages to all connected clients
+async def send_to_clients(message):
+    for client in clients:
+        try:
+            await client.send(message)
+        except Exception as e:
+            print(f"❌ Error sending to client: {e}")
+    print(message)  # Auch in die Konsole ausgeben
+
+async def websocket_handler(websocket, path):
+    print("🌐 WebSocket client connected")
+    clients.add(websocket)
+    try:
+        await websocket.wait_closed()
+    finally:
+        clients.remove(websocket)
+        print("❌ WebSocket client disconnected")
+
+async def start_websocket_server():
+    server = await websockets.serve(websocket_handler, 'localhost', 8765)
+    print("WebSocket Server running on ws://localhost:8765/")
+    await server.wait_closed()
+
+# Start the WebSocket server in the main event loop
+def run_websocket_server():
+    asyncio.run(start_websocket_server())
+
+ws_thread = threading.Thread(target=run_websocket_server, daemon=True)
+ws_thread.start()
+
+# ========== TRADING LOGIC ==========
+
+async def get_market_price():
+    orderbook = exchange.GetOrderBook(pair, depth='50')
     if 'error' in orderbook:
-        print(f"❌ Error fetching the order book: {orderbook['error']}")
+        await send_to_clients(f"❌ Error fetching the order book: {orderbook['error']}")
         return None
 
     best_bid = max((float(order[0]) for order in orderbook['bids']), default=None)
     best_ask = min((float(order[0]) for order in orderbook['asks']), default=None)
 
     if best_bid is None or best_ask is None:
-        print("❌ No valid bid or ask price found.")
+        await send_to_clients("❌ No valid bid or ask price found.")
         return None
 
     mid_price = (best_bid + best_ask) / 2
-    print(f"Best Bid: {best_bid}, Best Ask: {best_ask}, Mid Price: {mid_price}")
+    await send_to_clients(f"Best Bid: {best_bid}, Best Ask: {best_ask}, Mid Price: {mid_price}")
     return mid_price
 
-def create_offers(mid_price, spread_percentage, num_offers, offer_difference):
+async def create_offers(mid_price, spread_percentage, num_offers, offer_difference):
     buy_offers = []
     sell_offers = []
 
@@ -50,7 +86,7 @@ def create_offers(mid_price, spread_percentage, num_offers, offer_difference):
     buy_price = mid_price - spread / 2
     sell_price = mid_price + spread / 2
 
-    print(f"Creating offers: Mid price = {mid_price}, Spread = {spread}, Buy price = {buy_price}, Sell price = {sell_price}")
+    await send_to_clients(f"Creating offers: Mid price = {mid_price}, Spread = {spread}, Buy = {buy_price}, Sell = {sell_price}")
 
     for i in range(num_offers):
         buy_offers.append(buy_price * (1 - i * offer_difference))
@@ -58,115 +94,115 @@ def create_offers(mid_price, spread_percentage, num_offers, offer_difference):
 
     return buy_offers, sell_offers
 
-def get_balance_usdt():
-    print("Fetching USDT balance...")
+async def get_balance_usdt():
+    await send_to_clients("Fetching USDT balance...")
     balance = exchange.Balances()
     usdt_balance = next((item['balance'] for item in balance['user']['currencies'] if item['id'] == 'USDT'), 0.0)
-    print(f"USDT balance fetched: {usdt_balance}")
+    await send_to_clients(f"USDT balance: {usdt_balance}")
     return usdt_balance
 
-def get_balance_coin():
-    print("Fetching Coin balance...")
+async def get_balance_coin():
+    await send_to_clients("Fetching CYTX balance...")
     balance = exchange.Balances()
-    coin_balance = next((item['balance'] for item in balance['user']['currencies'] if item['id'] == 'CYTX'), 0.0)  
-    print(f"Coin balance fetched: {coin_balance}")
+    coin_balance = next((item['balance'] for item in balance['user']['currencies'] if item['id'] == 'CYTX'), 0.0)
+    await send_to_clients(f"CYTX balance: {coin_balance}")
     return coin_balance
 
-def place_orders(buy_offers, sell_offers, usdt_amount, coin_amount):
-    print(f"Placing orders with {len(buy_offers)} buy and {len(sell_offers)} sell offers...")
+async def place_orders(buy_offers, sell_offers, usdt_amount, coin_amount):
+    await send_to_clients(f"Placing {len(buy_offers)} buy and {len(sell_offers)} sell orders...")
+
     buy_amount_per_order = usdt_amount / len(buy_offers)
     sell_amount_per_order = coin_amount / len(sell_offers)
 
+    # Placing Buy Orders
     for buy_price in buy_offers:
         try:
-            print(f"Placing buy order at {buy_price}...")
+            await send_to_clients(f"Placing BUY @ {buy_price}")
             result = exchange.Order(buy_amount_per_order / buy_price, pair, buy_price, 'buy', 'limit')
-            print(f"Buy order result: {result}")  
-            if result.get('hasError') or result.get('status') != 'OK':
-                print(f"❌ Failed to place buy order at {buy_price}. Error: {result}")
-            else:
-                print(f"✅ Placed buy order at {buy_price}")
-        except Exception as e:
-            print(f"❌ Error placing buy order at {buy_price}: {e}")
-            if "Too many requests" in str(e):
-                print("⏳ Rate limit reached. Pausing for 10 seconds.")
-                time.sleep(10)
-        time.sleep(1)
 
+            if result.get('hasError') or result.get('status') != 'OK':
+                await send_to_clients(f"❌ Failed to place buy order at {buy_price}. Error: {result}")
+            else:
+                await send_to_clients(f"✅ Placed buy order at {buy_price}")
+        except Exception as e:
+            await send_to_clients(f"❌ Buy order error: {e}")
+            if "Too many requests" in str(e):
+                await asyncio.sleep(10) 
+        await asyncio.sleep(1)
+
+    # Placing Sell Orders
     for sell_price in sell_offers:
         try:
-            print(f"Placing sell order at {sell_price}...")
+            await send_to_clients(f"Placing SELL @ {sell_price}")
             result = exchange.Order(sell_amount_per_order, pair, sell_price, 'sell', 'limit')
-            print(f"Sell order result: {result}")  
-            if result.get('hasError') or result.get('status') != 'OK':
-                print(f"❌ Failed to place sell order at {sell_price}. Error: {result}")
-            else:
-                print(f"✅ Placed sell order at {sell_price}")
-        except Exception as e:
-            print(f"❌ Error placing sell order at {sell_price}: {e}")
-            if "Too many requests" in str(e):
-                print("⏳ Rate limit reached. Pausing for 10 seconds.")
-                time.sleep(10)
-        time.sleep(1)
 
-def show_ascii_art():
-    print("""
+            if result.get('hasError') or result.get('status') != 'OK':
+                await send_to_clients(f"❌ Failed to place sell order at {sell_price}. Error: {result}")
+            else:
+                await send_to_clients(f"✅ Placed sell order at {sell_price}")
+        except Exception as e:
+            await send_to_clients(f"❌ Sell order error: {e}")
+            if "Too many requests" in str(e):
+                await asyncio.sleep(10) 
+        await asyncio.sleep(1)
+
+async def show_ascii_art():
+    await send_to_clients(r"""
    _____ _______     _______ _______ _______   __
   / ____|  __ \ \   / /  __ \__   __|_   _\ \ / /
  | |    | |__) \ \_/ /| |__) | | |    | |  \ V / 
  | |    |  _  / \   / |  ___/  | |    | |   > <  
  | |____| | \ \  | |  | |      | |   _| |_ / . \ 
   \_____|_|  \_\ |_|  |_|      |_|  |_____/_/ \_\
-                                                 
     """)
 
-if __name__ == '__main__':
-    show_ascii_art()
+# ========== MAIN LOOP ==========
+
+async def main():
+    await show_ascii_art()
 
     current_usdt_balance = START_USDT_AMOUNT
     current_coin_balance = START_COIN_AMOUNT
 
     while True:
-        print("\n🔄 Starting new cycle...")
+        await send_to_clients("\n🔄 Starting new cycle...")
 
-        # Adjust balances if they exceed maximum
         if current_usdt_balance > MAX_USDT_AMOUNT:
             current_usdt_balance = MAX_USDT_AMOUNT
-            print(f"⚠️ USDT capped at max: {MAX_USDT_AMOUNT}")
+            await send_to_clients(f"⚠️ USDT capped at {MAX_USDT_AMOUNT}")
         if current_coin_balance > MAX_COIN_AMOUNT:
             current_coin_balance = MAX_COIN_AMOUNT
-            print(f"⚠️ Coin capped at max: {MAX_COIN_AMOUNT}")
+            await send_to_clients(f"⚠️ CYTX capped at {MAX_COIN_AMOUNT}")
 
-        # Calculate current market price
-        mid_price = get_market_price()
+        mid_price = await get_market_price()
         if mid_price is None:
-            print("❌ Could not get mid price. Skipping order placement.")
-            time.sleep(SLEEP_TIME)
+            await send_to_clients("❌ Skipping cycle (no mid price).")
+            await asyncio.sleep(SLEEP_TIME)
             continue
 
-        # Cancel all orders
         exchange.CancelAllOpenOrdersForMarket(pair)
-        print("⏳ Wait 10 seconds after deleting orders...")
-        time.sleep(10)
+        await send_to_clients("🧹 Orders canceled. Waiting 10 seconds...")
+        await asyncio.sleep(10)
 
-        # Fetch the balance again
-        updated_usdt_balance = get_balance_usdt()
-        updated_coin_balance = get_balance_coin()
+        updated_usdt_balance = await get_balance_usdt()
+        updated_coin_balance = await get_balance_coin()
 
-        print(f"💰 Updated USDT balance: {updated_usdt_balance}")
-        print(f"💰 Updated Coin balance: {updated_coin_balance}")
+        await send_to_clients(f"💰 Updated USDT: {updated_usdt_balance}")
+        await send_to_clients(f"💰 Updated CYTX: {updated_coin_balance}")
 
         if current_usdt_balance > 0 and current_coin_balance > 0:
-            buy_offers, sell_offers = create_offers(mid_price, SPREAD_PERCENTAGE, NUM_OFFERS, OFFER_DIFFERENCE)
-            place_orders(buy_offers, sell_offers, current_usdt_balance, current_coin_balance)
+            buy_offers, sell_offers = await create_offers(mid_price, SPREAD_PERCENTAGE, NUM_OFFERS, OFFER_DIFFERENCE)
+            await place_orders(buy_offers, sell_offers, current_usdt_balance, current_coin_balance)
         else:
-            print("⚠️ Not enough balance to place new orders.")
+            await send_to_clients("⚠️ Not enough balance to place orders.")
 
-        # Wait for the next cycle
-        print(f"⏳ Waiting for the next cycle ({SLEEP_TIME // 60} min)...")
+        await send_to_clients(f"⏳ Waiting {SLEEP_TIME // 60} minutes...")
 
         for remaining in range(SLEEP_TIME, 0, -1):
             mins, secs = divmod(remaining, 60)
-            time_format = f"{mins:02d}:{secs:02d}"
-            print(f"\r⏳ Next cycle in: {time_format}", end="", flush=True)
-            time.sleep(1)
+            await send_to_clients(f"\r⏳ Next cycle in: {mins:02d}:{secs:02d}", end="", flush=True)
+            await asyncio.sleep(1)
+
+# Run the main loop with asyncio
+if __name__ == '__main__':
+    asyncio.run(main())
