@@ -1,9 +1,13 @@
+import sys
 import time
 import configparser
 import exbitron_exchange_api as exchange
 import asyncio
 import websockets
 import threading
+import os
+
+sys.stdout.reconfigure(encoding='utf-8')
 
 # ========== CONFIG ==========
 
@@ -25,11 +29,24 @@ SLEEP_TIME = int(config['DEFAULT']['SLEEP_TIME'])
 
 pair = 'CYTX-USDT'
 
+LOG_FILE_PATH = 'cryptix_bot.txt'
+
+# ========== LOGGING FUNCTION ==========
+
+def log_to_file(message):
+    if os.path.exists(LOG_FILE_PATH):
+        os.remove(LOG_FILE_PATH)
+    
+    with open(LOG_FILE_PATH, 'a', encoding='utf-8') as log_file:
+        log_file.write(message + '\n')
+
 # ========== WEBSOCKET SERVER ==========
 
 clients = set()
 
 async def send_to_clients(message):
+    log_to_file(message)
+    
     for client in clients:
         try:
             await client.send(message)
@@ -206,4 +223,7 @@ async def main():
 
 # Run the main loop with asyncio
 if __name__ == '__main__':
+    if os.path.exists(LOG_FILE_PATH):
+        os.remove(LOG_FILE_PATH)
+
     asyncio.run(main())
