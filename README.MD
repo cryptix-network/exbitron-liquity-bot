@@ -44,7 +44,7 @@ The use of this software has not been extensively tested. Use is at your own ris
 The Cryptix Liquidity Bot automatically places buy and sell orders on Exbitron to maintain market liquidity and to reduce the trading spread for a fair market. 
 
 Here’s how it works:
-Key Config Values:  (can be customized to your needs, with more or less spread. More or less USDT/CYTX, etc. )
+Key Config Values:  (can be customized to your needs, with more or less spread. More or less USDT/CPAY, etc. )
 
 - START_USDT_AMOUNT: Initial USDT balance (e.g., 100 USDT)
 - START_COIN_AMOUNT: Initial coin balance (e.g., 20,000 coins)

@@ -27,7 +27,7 @@ OFFER_DIFFERENCE = float(config['DEFAULT']['OFFER_DIFFERENCE'])
 
 SLEEP_TIME = int(config['DEFAULT']['SLEEP_TIME'])
 
-pair = 'CYTX-USDT'
+pair = 'CPAY-USDT'
 
 LOG_FILE_PATH = 'cryptix_bot.txt'
 
@@ -117,10 +117,10 @@ async def get_balance_usdt():
     return usdt_balance
 
 async def get_balance_coin():
-    await send_to_clients("Fetching CYTX balance...")
+    await send_to_clients("Fetching CPAY balance...")
     balance = exchange.Balances()
-    coin_balance = next((item['balance'] for item in balance['user']['currencies'] if item['id'] == 'CYTX'), 0.0)
-    await send_to_clients(f"CYTX balance: {coin_balance}")
+    coin_balance = next((item['balance'] for item in balance['user']['currencies'] if item['id'] == 'CPAY'), 0.0)
+    await send_to_clients(f"CPAY balance: {coin_balance}")
     return coin_balance
 
 async def place_orders(buy_offers, sell_offers, usdt_amount, coin_amount):
@@ -187,7 +187,7 @@ async def main():
             await send_to_clients(f"⚠️ USDT capped at {MAX_USDT_AMOUNT}")
         if current_coin_balance > MAX_COIN_AMOUNT:
             current_coin_balance = MAX_COIN_AMOUNT
-            await send_to_clients(f"⚠️ CYTX capped at {MAX_COIN_AMOUNT}")
+            await send_to_clients(f"⚠️ CPAY capped at {MAX_COIN_AMOUNT}")
 
         mid_price = await get_market_price()
         if mid_price is None:
@@ -203,7 +203,7 @@ async def main():
         updated_coin_balance = await get_balance_coin()
 
         await send_to_clients(f"💰 Updated USDT: {updated_usdt_balance}")
-        await send_to_clients(f"💰 Updated CYTX: {updated_coin_balance}")
+        await send_to_clients(f"💰 Updated CPAY: {updated_coin_balance}")
 
         if current_usdt_balance > 0 and current_coin_balance > 0:
             buy_offers, sell_offers = await create_offers(mid_price, SPREAD_PERCENTAGE, NUM_OFFERS, OFFER_DIFFERENCE)

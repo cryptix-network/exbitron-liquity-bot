@@ -7,7 +7,7 @@ import exbitron_exchange_api as exchange
 ###
 
 
-pair = 'CYTX-USDT'
+pair = 'CPAY-USDT'
 
 # PUT HERE Your API Token created by Exbitron web app
 exchange.TOKEN = 'YOUR_API_KEY_HERE'
@@ -84,7 +84,7 @@ def get_balance_usdt():
 def get_balance_coin():
     print("Fetching Coin balance...")
     balance = exchange.Balances()
-    coin_balance = next((item['balance'] for item in balance['user']['currencies'] if item['id'] == 'CYTX'), 0.0)  
+    coin_balance = next((item['balance'] for item in balance['user']['currencies'] if item['id'] == 'CPAY'), 0.0)  
     print(f"Coin balance fetched: {coin_balance}")
     return coin_balance
 
