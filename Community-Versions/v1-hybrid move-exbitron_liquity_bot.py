@@ -13,7 +13,7 @@ import time
 import exbitron_exchange_api as exchange
 
 # Settings for pair and API token
-pair = 'CYTX-USDT'
+pair = 'CPAY-USDT'
 exchange.TOKEN = 'YOUR_API_KEY_HERE'
 
 # Initial bot settings
@@ -86,11 +86,11 @@ def get_balance_usdt():
     print(f"USDT balance fetched: {usdt_balance}")
     return usdt_balance
 
-# Function to get Coin (CYTX) balance
+# Function to get Coin (CPAY) balance
 def get_balance_coin():
     print("Fetching Coin balance...")
     balance = exchange.Balances()
-    coin_balance = next((item['balance'] for item in balance['user']['currencies'] if item['id'] == 'CYTX'), 0.0)  
+    coin_balance = next((item['balance'] for item in balance['user']['currencies'] if item['id'] == 'CPAY'), 0.0)  
     print(f"Coin balance fetched: {coin_balance}")
     return coin_balance
 
