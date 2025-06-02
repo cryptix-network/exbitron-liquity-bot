@@ -38,6 +38,9 @@ API keys can be generated from the Exbitron web platform in the Settings or Prof
 ## Usage
 The use of this software has not been extensively tested. Use is at your own risk; we assume no liability for its use. This software is provided free of charge and is open source.
 
+### Websocket
+The websocket connection is opened only for the local computer at:
+ws://localhost:8765
 
 ## Cryptix Liquidity Trading Bot for Exbitron
 
