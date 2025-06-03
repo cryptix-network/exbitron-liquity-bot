@@ -7,6 +7,12 @@ import websockets
 import threading
 import os
 
+# ========== INFO ==========
+# @Cryptis 
+# https://github.com/cryptix-network/exbitron-liquity-bot
+#
+
+
 sys.stdout.reconfigure(encoding='utf-8')
 
 # ========== CONFIG ==========

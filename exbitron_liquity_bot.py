@@ -2,10 +2,10 @@ import time
 import exbitron_exchange_api as exchange
 
 
-###
-### CRYPTIX LIQUIDITY BOT FOR BUY AND SELL ORDERS ###
-###
-
+# ========== INFO ==========
+# @Cryptis 
+# https://github.com/cryptix-network/exbitron-liquity-bot
+#
 
 pair = 'CPAY-USDT'
 
