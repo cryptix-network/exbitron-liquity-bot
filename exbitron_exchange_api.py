@@ -6,7 +6,7 @@ import time
 ### Cryptis: Addet CancelAllOpenOrdersForMarket
 ### Cryptis: Addet Debug
 
-API_ENDPOINT = "https://api.exbitron.digital/api/v1"
+API_ENDPOINT = "https://api.exbitron.com"
 TOKEN = 'YOUR_API_KEY_HERE'
 UserAgent = 'Exbitron/CryptixBot'
 

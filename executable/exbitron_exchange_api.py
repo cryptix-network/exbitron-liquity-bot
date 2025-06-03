@@ -11,7 +11,7 @@ import time
 config = configparser.ConfigParser()
 config.read('config.txt')
 
-API_ENDPOINT = "https://api.exbitron.digital/api/v1"
+API_ENDPOINT = "https://api.exbitron.com"
 TOKEN = config['DEFAULT']['API_TOKEN']
 UserAgent = 'Exbitron/CryptixBot'
 
