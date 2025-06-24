@@ -149,7 +149,7 @@ async def place_orders(buy_offers, sell_offers, usdt_amount, coin_amount):
             await send_to_clients(f"❌ Buy order error: {e}")
             if "Too many requests" in str(e):
                 await asyncio.sleep(10) 
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.1)
 
     # Placing Sell Orders
     for sell_price in sell_offers:
@@ -165,7 +165,7 @@ async def place_orders(buy_offers, sell_offers, usdt_amount, coin_amount):
             await send_to_clients(f"❌ Sell order error: {e}")
             if "Too many requests" in str(e):
                 await asyncio.sleep(10) 
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.1)
 
 async def show_ascii_art():
     await send_to_clients(r"""
@@ -202,8 +202,8 @@ async def main():
             continue
 
         exchange.CancelAllOpenOrdersForMarket(pair)
-        await send_to_clients("🧹 Orders canceled. Waiting 10 seconds...")
-        await asyncio.sleep(10)
+        await send_to_clients("🧹 Orders canceled. Waiting 1 seconds...")
+        await asyncio.sleep(1)
 
         updated_usdt_balance = await get_balance_usdt()
         updated_coin_balance = await get_balance_coin()

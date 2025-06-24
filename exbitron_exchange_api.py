@@ -6,7 +6,7 @@ import time
 ### Cryptis: Addet CancelAllOpenOrdersForMarket
 ### Cryptis: Addet Debug
 
-API_ENDPOINT = "https://api.exbitron.com"
+API_ENDPOINT = "https://api.exbitron.com/api/v1"
 TOKEN = 'YOUR_API_KEY_HERE'
 UserAgent = 'Exbitron/CryptixBot'
 
@@ -206,7 +206,7 @@ def OrderBatch():
 def OrderCancelBatch(orders: list[str]):
     url = f"{API_ENDPOINT}/order/cancel/batch"
     
-    time.sleep(5) 
+    time.sleep(1) 
     
     response = requests.post(
         url,
@@ -222,7 +222,7 @@ def OrderCancelBatch(orders: list[str]):
 
 def CancelAllOpenOrdersForMarket(market: str):
     try:
-        time.sleep(1)
+        time.sleep(0.1)
         open_orders_wrapper = GetMarketOrder(market, "open")
         open_orders = open_orders_wrapper["userOrders"]["result"]
 

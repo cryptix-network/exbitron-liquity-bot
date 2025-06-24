@@ -110,10 +110,10 @@ def place_orders(buy_offers, sell_offers, usdt_amount, coin_amount):
         except Exception as e:
             print(f"❌ Error placing buy order at {buy_price}: {e}")
             if "Too many requests" in str(e):
-                print("⏳ Rate limit reached. Pausing for 10 seconds.")
-                time.sleep(10)
+                print("⏳ Rate limit reached. Pausing for 3 seconds.")
+                time.sleep(1)
         
-        time.sleep(1)
+        time.sleep(0.1)
 
     # Place sell orders
     for sell_price in sell_offers:
@@ -131,10 +131,10 @@ def place_orders(buy_offers, sell_offers, usdt_amount, coin_amount):
         except Exception as e:
             print(f"❌ Error placing sell order at {sell_price}: {e}")
             if "Too many requests" in str(e):
-                print("⏳ Rate limit reached. Pausing for 10 seconds.")
-                time.sleep(10)
+                print("⏳ Rate limit reached. Pausing for 3 seconds.")
+                time.sleep(3)
         
-        time.sleep(1)
+        time.sleep(0.1)
 
 
 def show_ascii_art():
@@ -174,8 +174,8 @@ if __name__ == '__main__':
 
         # Cancel all orders before placing new ones
         exchange.CancelAllOpenOrdersForMarket(pair)
-        print("⏳ Wait 10 seconds after deleting orders...")
-        time.sleep(10)
+        print("⏳ Wait 3 seconds after deleting orders...")
+        time.sleep(3)
 
         # Fetch the balance again
         updated_usdt_balance = get_balance_usdt()

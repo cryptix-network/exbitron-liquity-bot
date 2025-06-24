@@ -11,7 +11,7 @@ import time
 config = configparser.ConfigParser()
 config.read('config.txt')
 
-API_ENDPOINT = "https://api.exbitron.com"
+API_ENDPOINT = "https://api.exbitron.com/api/v1"
 TOKEN = config['DEFAULT']['API_TOKEN']
 UserAgent = 'Exbitron/CryptixBot'
 
@@ -28,9 +28,17 @@ def ReturnTimestampOrError(response):
     raise Exception(answer['errorMessage'])
 
 def ReturnDirectOrError(response):
-    answer=json.loads(response.text)
-    if 'status' in answer and answer['status']!='OK' and 'hasError' in answer and answer['hasError']:
-        raise Exception(answer['errorMessage'])
+    if not response.text.strip():
+        raise Exception("[ERROR] Empty response received from server.")
+
+    try:
+        answer = json.loads(response.text)
+    except json.JSONDecodeError as e:
+        raise Exception(f"[JSON ERROR] Failed to parse response: {e}\nRaw response:\n{response.text}")
+
+    if 'status' in answer and answer['status'] != 'OK' and 'hasError' in answer and answer['hasError']:
+        raise Exception(f"[API ERROR] {answer.get('errorMessage', 'Unknown error')}")
+    
     return answer
 
 def ReturnStatusOrError(response):
@@ -212,7 +220,7 @@ def OrderBatch():
 def OrderCancelBatch(orders: list[str]):
     url = f"{API_ENDPOINT}/order/cancel/batch"
     
-    time.sleep(5) 
+    time.sleep(0.1) 
     
     response = requests.post(
         url,
@@ -228,7 +236,7 @@ def OrderCancelBatch(orders: list[str]):
 
 def CancelAllOpenOrdersForMarket(market: str):
     try:
-        time.sleep(1)
+        time.sleep(0.1)
         open_orders_wrapper = GetMarketOrder(market, "open")
         open_orders = open_orders_wrapper["userOrders"]["result"]
 
