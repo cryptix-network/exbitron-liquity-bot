@@ -188,6 +188,7 @@ async def main():
     while True:
         await send_to_clients("\n🔄 Starting new cycle...")
 
+        # Cap balances
         if current_usdt_balance > MAX_USDT_AMOUNT:
             current_usdt_balance = MAX_USDT_AMOUNT
             await send_to_clients(f"⚠️ USDT capped at {MAX_USDT_AMOUNT}")
@@ -195,16 +196,38 @@ async def main():
             current_coin_balance = MAX_COIN_AMOUNT
             await send_to_clients(f"⚠️ CPAY capped at {MAX_COIN_AMOUNT}")
 
+        # Get market price
         mid_price = await get_market_price()
         if mid_price is None:
             await send_to_clients("❌ Skipping cycle (no mid price).")
             await asyncio.sleep(SLEEP_TIME)
             continue
 
-        exchange.CancelAllOpenOrdersForMarket(pair)
-        await send_to_clients("🧹 Orders canceled. Waiting 10 seconds...")
+        # Cancel open orders 
+        await send_to_clients("🧹 Canceling all open orders...")
+        attempt = 1
+        max_attempts = 10
+
+        while True:
+            await exchange.CancelAllOpenOrdersForMarket(pair)
+            await asyncio.sleep(3)
+            open_orders = await exchange.GetOpenOrders(pair)
+
+            if not open_orders:
+                await send_to_clients(f"✅ All orders successfully canceled after {attempt} attempt(s).")
+                break
+
+            await send_to_clients(f"⚠️ Still {len(open_orders)} open orders – retrying (attempt {attempt})...")
+            attempt += 1
+
+            if attempt > max_attempts:
+                await send_to_clients("❌ Max attempts reached. Some orders may still be open.")
+                break
+
+        await send_to_clients("⏳ Waiting 10 seconds before next actions...")
         await asyncio.sleep(10)
 
+        # Get updated balances
         updated_usdt_balance = await get_balance_usdt()
         updated_coin_balance = await get_balance_coin()
 
@@ -217,15 +240,15 @@ async def main():
         else:
             await send_to_clients("⚠️ Not enough balance to place orders.")
 
+        # Sleep cycle
         await send_to_clients(f"⏳ Waiting {SLEEP_TIME // 60} minutes...")
-        await send_to_clients(f"⏳ Next cycle: waiting {SLEEP_TIME // 60} minutes...")
-
         for remaining in range(SLEEP_TIME, 0, -1):
             mins, secs = divmod(remaining, 60)
             print(f"\r⏳ Next cycle in: {mins:02d}:{secs:02d}", end='', flush=True)
             await asyncio.sleep(1)
 
-        print()
+        print()  
+
 
 # Run the main loop with asyncio
 if __name__ == '__main__':
@@ -233,3 +256,4 @@ if __name__ == '__main__':
         os.remove(LOG_FILE_PATH)
 
     asyncio.run(main())
+
