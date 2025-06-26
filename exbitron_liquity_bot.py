@@ -174,8 +174,8 @@ if __name__ == '__main__':
 
         # Cancel all orders before placing new ones
         exchange.CancelAllOpenOrdersForMarket(pair)
-        print("⏳ Wait 10 seconds after deleting orders...")
-        time.sleep(10)
+        print("⏳ Wait 1 seconds after deleting orders...")
+        time.sleep(1)
 
         # Fetch the balance again
         updated_usdt_balance = get_balance_usdt()

@@ -234,33 +234,38 @@ def OrderCancelBatch(orders: list[str]):
     return ReturnStatusOrError(response)
 
 
-def CancelAllOpenOrdersForMarket(market: str):
+def CancelAllOpenOrdersForMarket(market: str, max_retries=10):
     try:
-        time.sleep(1)
-        open_orders_wrapper = GetMarketOrder(market, "open")
-        open_orders = open_orders_wrapper["userOrders"]["result"]
+        for attempt in range(1, max_retries + 1):
+            time.sleep(1)
+            open_orders_wrapper = GetMarketOrder(market, "open")
+            open_orders = open_orders_wrapper["userOrders"]["result"]
 
-        order_ids = [order["id"] for order in open_orders]
+            order_ids = [order["id"] for order in open_orders]
+            num_orders = len(order_ids)
 
-        num_orders = len(order_ids)
-        if num_orders == 0:
-            print(f"✅ No open orders found for {market}.")
-            return 
+            if num_orders == 0:
+                print(f"✅ No open orders found for {market}.")
+                return
 
-        print(f"🚀 {num_orders} open orders loaded for {market}. They will be deleted now.")
+            print(f"🚀 Attempt {attempt}/{max_retries}: {num_orders} open orders found for {market}. They will be deleted now.")
 
-        response = OrderCancelBatch(order_ids)
+            response = OrderCancelBatch(order_ids)
 
-        if response == False:
-            print(f"✅ No errors, process completed.") 
-            return 
-        else:
-            print(f"❌ Unexpected response: {response}. Retrying in 10 seconds...")
-            time.sleep(10) 
-            return CancelAllOpenOrdersForMarket(market)
+            if response == False:
+                print(f"✅ Orders cancelled successfully on attempt {attempt}.")
+            else:
+                print(f"❌ Unexpected response: {response}. Retrying in 10 seconds...")
+                time.sleep(10)
+                continue
+
+            time.sleep(3)
+
+        print(f"⚠️ After {max_retries} attempts, some open orders may still remain for {market}.")
 
     except Exception as e:
         print(f"❌ Error with {market}: {e}")
+
 
 
 def GetMarketOrder(market: str, status: str, page: int=None, limit: int=None):
