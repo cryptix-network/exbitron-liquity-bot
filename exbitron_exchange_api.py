@@ -222,7 +222,7 @@ def OrderCancelBatch(orders: list[str]):
 
 def CancelAllOpenOrdersForMarket(market: str):
     try:
-        time.sleep(0.1)
+        time.sleep(1)
         open_orders_wrapper = GetMarketOrder(market, "open")
         open_orders = open_orders_wrapper["userOrders"]["result"]
 

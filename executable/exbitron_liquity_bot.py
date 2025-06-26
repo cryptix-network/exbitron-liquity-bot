@@ -202,8 +202,8 @@ async def main():
             continue
 
         exchange.CancelAllOpenOrdersForMarket(pair)
-        await send_to_clients("🧹 Orders canceled. Waiting 1 seconds...")
-        await asyncio.sleep(1)
+        await send_to_clients("🧹 Orders canceled. Waiting 3 seconds...")
+        await asyncio.sleep(3)
 
         updated_usdt_balance = await get_balance_usdt()
         updated_coin_balance = await get_balance_coin()
