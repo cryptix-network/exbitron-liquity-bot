@@ -220,7 +220,7 @@ def OrderCancelBatch(orders: list[str]):
     return ReturnStatusOrError(response)
 
 
-def CancelAllOpenOrdersForMarket(market: str, max_retries=10):
+def CancelAllOpenOrdersForMarket(market: str, max_retries=1000):
     try:
         for attempt in range(1, max_retries + 1):
             time.sleep(1)
