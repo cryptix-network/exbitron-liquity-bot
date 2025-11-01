@@ -240,7 +240,6 @@ def CancelAllOpenOrdersForMarket(market: str, max_retries=1000):
             time.sleep(1)
             open_orders_wrapper = GetMarketOrder(market, "open")
             open_orders = open_orders_wrapper["userOrders"]["result"]
-
             order_ids = [order["id"] for order in open_orders]
             num_orders = len(order_ids)
 
@@ -248,23 +247,19 @@ def CancelAllOpenOrdersForMarket(market: str, max_retries=1000):
                 print(f"✅ No open orders found for {market}.")
                 return
 
-            print(f"🚀 Attempt {attempt}/{max_retries}: {num_orders} open orders found for {market}. They will be deleted now.")
+            print(f"🚀 Attempt {attempt}/{max_retries}: {num_orders} open orders found for {market}.")
 
-            response = OrderCancelBatch(order_ids)
+            chunks = [order_ids[i:i+20] for i in range(0, num_orders, 20)]
+            for batch in chunks:
+                resp = OrderCancelBatch(batch)
+                time.sleep(1)
 
-            if response == False:
-                print(f"✅ Orders cancelled successfully on attempt {attempt}.")
-            else:
-                print(f"❌ Unexpected response: {response}. Retrying in 10 seconds...")
-                time.sleep(10)
-                continue
-
-            time.sleep(3)
+            time.sleep(2)
 
         print(f"⚠️ After {max_retries} attempts, some open orders may still remain for {market}.")
-
     except Exception as e:
         print(f"❌ Error with {market}: {e}")
+
 
 
 

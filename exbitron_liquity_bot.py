@@ -77,16 +77,20 @@ def create_offers(mid_price, spread_percentage, num_offers, offer_difference):
 def get_balance_usdt():
     print("Fetching USDT balance...")
     balance = exchange.Balances()
-    usdt_balance = next((item['balance'] for item in balance['user']['currencies'] if item['id'] == 'USDT'), 0.0)
+    currencies = balance["currencies"]    
+    usdt_balance = next((float(item["balance"]) for item in currencies if item["id"] == "USDT"), 0.0)   
     print(f"USDT balance fetched: {usdt_balance}")
     return usdt_balance
+
 
 def get_balance_coin():
     print("Fetching Coin balance...")
     balance = exchange.Balances()
-    coin_balance = next((item['balance'] for item in balance['user']['currencies'] if item['id'] == 'CPAY'), 0.0)  
+    currencies = balance["currencies"]   
+    coin_balance = next((float(item["balance"]) for item in currencies if item["id"] == "CPAY"), 0.0)  
     print(f"Coin balance fetched: {coin_balance}")
     return coin_balance
+
 
 # Place buy and sell orders
 def place_orders(buy_offers, sell_offers, usdt_amount, coin_amount):

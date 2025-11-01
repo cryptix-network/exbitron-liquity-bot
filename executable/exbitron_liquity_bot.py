@@ -117,15 +117,18 @@ async def create_offers(mid_price, spread_percentage, num_offers, offer_differen
 
 async def get_balance_usdt():
     await send_to_clients("Fetching USDT balance...")
-    balance = exchange.Balances()
-    usdt_balance = next((item['balance'] for item in balance['user']['currencies'] if item['id'] == 'USDT'), 0.0)
+    balance = exchange.Balances() 
+    currencies = balance["currencies"]
+    usdt_balance = next((float(c["balance"]) for c in currencies if c["id"] == "USDT"), 0.0)
     await send_to_clients(f"USDT balance: {usdt_balance}")
     return usdt_balance
+
 
 async def get_balance_coin():
     await send_to_clients("Fetching CPAY balance...")
     balance = exchange.Balances()
-    coin_balance = next((item['balance'] for item in balance['user']['currencies'] if item['id'] == 'CPAY'), 0.0)
+    currencies = balance["currencies"]
+    coin_balance = next((float(c["balance"]) for c in currencies if c["id"] == "CPAY"), 0.0)
     await send_to_clients(f"CPAY balance: {coin_balance}")
     return coin_balance
 
